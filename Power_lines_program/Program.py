@@ -63,6 +63,7 @@ start = time.time()  # Начало отсчёта времени выполне
 
 fig = plt.figure(figsize=(9, 9), facecolor="#3c3f41")  # Формат фигуры (окна) в котором рисуется график
 axis = fig.add_subplot()  # создание осей
+axis.set_aspect("equal", adjustable='box')  # Соотношение сторон
 axis.set(facecolor="#2b2b2b")  # Цвет фона графика
 fig.suptitle("Численное моделирование электрического поля точечных зарядов", c="w")  # Заголовок
 plt.xlabel("Ox, м", c="w")  # Подписи осей

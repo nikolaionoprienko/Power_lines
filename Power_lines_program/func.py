@@ -1,8 +1,54 @@
 import numpy as np
 
 
-def power_lines(n, x_list, y_list, q_list, sign_list):
+def tension_calculation(sign_k, q, x, y, x_k1, y_k1, e_x, e_y):
+    e_x = (e_x +
+           sign_k * q * (x_k1 - x) / (
+                   ((x_k1 - x) ** 2 + (y_k1 - y) ** 2) ** (3 / 2))
+           )
 
+    e_y = (e_y +
+           sign_k * q * (y_k1 - y) / (
+                   ((x_k1 - x) ** 2 + (y_k1 - y) ** 2) ** (3 / 2))
+           )
+
+    return e_x, e_y
+
+
+def point_calculation(x_k1, y_k1, e_x, e_y, i):
+    sin = (e_y / (e_y ** 2 + e_x ** 2) ** (1 / 2))
+    cos = (e_x / (e_y ** 2 + e_x ** 2) ** (1 / 2))
+    tg = e_y / e_x
+
+    if ((abs(tg) <= 1) and (sin >= 0) and (cos >= 0)) or \
+            ((abs(tg) <= 1) and (sin <= 0) and (cos >= 0)):
+        dx = 0.01
+        dy = tg * dx
+        x_k1 = x_k1 + dx
+        y_k1 = y_k1 + dy
+    elif abs(tg) <= 1:
+        dx = -0.01
+        dy = tg * dx
+        x_k1 = x_k1 + dx
+        y_k1 = y_k1 + dy
+    elif ((abs(tg) > 1) and (sin >= 0) and (cos >= 0)) or \
+            ((abs(tg) > 1) and (sin >= 0) and (cos <= 0)):
+        dy = 0.01
+        dx = (1 / tg) * dy
+        x_k1 = x_k1 + dx
+        y_k1 = y_k1 + dy
+    else:
+        dy = -0.01
+        dx = (1 / tg) * dy
+        x_k1 = x_k1 + dx
+        y_k1 = y_k1 + dy
+
+    i = i + 1
+
+    return x_k1, y_k1, i
+
+
+def power_lines(n, x_list, y_list, q_list, sign_list):
     ax = []
     ay = []
     ax_list = []
@@ -48,49 +94,19 @@ def power_lines(n, x_list, y_list, q_list, sign_list):
 
             while (round(min(distance), 3) >= 0.01) and \
                     (max_d > d_dot_mid) and (i <= 1000):
+
                 E_x = 0
                 E_y = 0
 
                 try:
                     for o in range(0, n):
-                        E_x = (E_x +
-                               sign_k * q_list[o] * (x_k1 - x_list[o]) / (
-                                       ((x_k1 - x_list[o]) ** 2 + (y_k1 - y_list[o]) ** 2) ** (3 / 2))
-                               )
+                        q_o = q_list[o]
+                        x_o = x_list[o]
+                        y_o = y_list[o]
 
-                        E_y = (E_y +
-                               sign_k * q_list[o] * (y_k1 - y_list[o]) / (
-                                       ((x_k1 - x_list[o]) ** 2 + (y_k1 - y_list[o]) ** 2) ** (3 / 2))
-                               )
+                        E_x, E_y = tension_calculation(sign_k, q_o, x_o, y_o, x_k1, y_k1, E_x, E_y)
 
-                    sin = (E_y / (E_y ** 2 + E_x ** 2) ** (1 / 2))
-                    cos = (E_x / (E_y ** 2 + E_x ** 2) ** (1 / 2))
-                    tg = E_y / E_x
-
-                    if ((abs(tg) <= 1) and (sin >= 0) and (cos >= 0)) or \
-                            ((abs(tg) <= 1) and (sin <= 0) and (cos >= 0)):
-                        dx = 0.01
-                        dy = (E_y / E_x) * dx
-                        x_k1 = x_k1 + dx
-                        y_k1 = y_k1 + dy
-                    elif abs(tg) <= 1:
-                        dx = -0.01
-                        dy = (E_y / E_x) * dx
-                        x_k1 = x_k1 + dx
-                        y_k1 = y_k1 + dy
-                    elif ((abs(tg) > 1) and (sin >= 0) and (cos >= 0)) or \
-                            ((abs(tg) > 1) and (sin >= 0) and (cos <= 0)):
-                        dy = 0.01
-                        dx = (E_x / E_y) * dy
-                        x_k1 = x_k1 + dx
-                        y_k1 = y_k1 + dy
-                    else:
-                        dy = -0.01
-                        dx = (E_x / E_y) * dy
-                        x_k1 = x_k1 + dx
-                        y_k1 = y_k1 + dy
-
-                    i = i + 1
+                    x_k1, y_k1, i = point_calculation(x_k1, y_k1, E_x, E_y, i)
 
                     ax.append(x_k1)
                     ay.append(y_k1)
