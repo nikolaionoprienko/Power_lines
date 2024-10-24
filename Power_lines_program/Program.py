@@ -1,8 +1,11 @@
+import asyncio
+
 import numpy as np
 import matplotlib.pyplot as plt
 import time
 import func
 from func import power_lines
+
 
 print("\033[33m{}\033[0m".format("Вас приветствует программа по численному моделированию электростатического поля нескольких точечных зарядов. \n"))
 
@@ -27,7 +30,7 @@ sign_list = []  # Строка со знаками зарядов
 s_list = []     # Строка с видимыми размерами заряда (чтобы отличать на графике какой заряд больше по модулю, какой меньше)
 
 
-print("\033[31m\033[4m{}".format("Пока что, не следует вводить значения координат такие, чтобы расстояние между зарядами привышало 10 м."), "\033[0m\n")
+print("\033[31m\033[4m{}".format("Пока что не следует вводить значения координат такие, чтобы расстояние между зарядами привышало 10 м."), "\033[0m\n")
 
 for i in range(0, n):  # цикл для заполнения начальных условий (заполняются строки с 10 строчки кода по 15)
 
@@ -59,6 +62,13 @@ for i in range(0, n):  # цикл для заполнения начальных
     sign_list.append(sign)
     s_list.append(s)
 
+x_list = np.array(x_list)
+y_list = np.array(y_list)
+q_list = np.array(q_list)
+c_list = np.array(c_list)
+sign_list = np.array(sign_list)
+s_list = np.array(s_list)
+
 start = time.time()  # Начало отсчёта времени выполнения вычислений
 
 fig = plt.figure(figsize=(9, 9), facecolor="#3c3f41")  # Формат фигуры (окна) в котором рисуется график
@@ -78,9 +88,6 @@ def_time_start = time.time()
 ax_list, ay_list = power_lines(n, x_list, y_list, q_list, sign_list)
 def_time_end = time.time()
 def_time_complite = def_time_end - def_time_start
-
-ax_list = sum(ax_list, [])
-ay_list = sum(ay_list, [])
 
 axis.scatter(x_list, y_list, s=s_list, c=c_list, edgecolors="w", zorder=1)
 axis.plot(ax_list, ay_list, linewidth=0.5, c="#00ffff7f", zorder=-1)

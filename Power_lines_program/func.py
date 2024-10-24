@@ -49,10 +49,10 @@ def point_calculation(x_k1, y_k1, e_x, e_y, i):
 
 
 def power_lines(n, x_list, y_list, q_list, sign_list):
-    ax = []
-    ay = []
-    ax_list = []
-    ay_list = []
+    ax = np.array([], dtype=np.float64)
+    ay = np.array([], dtype=np.float64)
+    ax_list = np.array([], dtype=np.float64)
+    ay_list = np.array([], dtype=np.float64)
     R = 0.01
 
     for k in range(0, n):
@@ -61,38 +61,38 @@ def power_lines(n, x_list, y_list, q_list, sign_list):
         y_k = y_list[k]
         sign_k = sign_list[k]
 
-        ax_list.append(ax)
-        ay_list.append(ay)
+        ax_list = np.append(ax_list, ax)
+        ay_list = np.append(ay_list, ay)
 
-        ax = []
-        ay = []
+        ax = np.array([], dtype=np.float64)
+        ay = np.array([], dtype=np.float64)
 
         for l in range(0, 12):
 
             x_k1 = x_k + R * np.cos(2 * np.pi * l / 12)
             y_k1 = y_k + R * np.sin(2 * np.pi * l / 12)
 
-            ax.append(np.nan)
-            ay.append(np.nan)
+            ax = np.append(ax, np.nan)
+            ay = np.append(ay, np.nan)
 
-            ax.append(x_k)
-            ax.append(x_k1)
-            ay.append(y_k)
-            ay.append(y_k1)
+            ax = np.append(ax, x_k)
+            ax = np.append(ax, x_k1)
+            ay = np.append(ay, y_k)
+            ay = np.append(ay, y_k1)
 
-            distance = list([10])
+            distance = np.array([10], dtype=np.float64)
             d_dot_mid = ((x_k1 - sum(x_list) / n) ** 2 + (y_k1 - sum(y_list) / n) ** 2) ** (1 / 2)
             for m in range(0, n):
 
                 if (m != l) and (n != 1):
                     d = ((x_k1 - x_list[m]) ** 2 + (y_k1 - y_list[m]) ** 2) ** (1 / 2)
-                    distance.append(d)
+                    distance = np.append(distance, d)
                     if k == 0:
-                        max_d = 3 * max(distance)
+                        max_d = 3 * np.max(distance)
 
             i = 0
 
-            while (round(min(distance), 3) >= 0.01) and \
+            while (round(np.min(distance), 3) >= 0.01) and \
                     (max_d > d_dot_mid) and (i <= 1000):
 
                 E_x = 0
@@ -108,20 +108,19 @@ def power_lines(n, x_list, y_list, q_list, sign_list):
 
                     x_k1, y_k1, i = point_calculation(x_k1, y_k1, E_x, E_y, i)
 
-                    ax.append(x_k1)
-                    ay.append(y_k1)
+                    ax = np.append(ax, x_k1)
+                    ay = np.append(ay, y_k1)
 
                     d_dot_mid = ((x_k1 - sum(x_list) / n) ** 2 + (y_k1 - sum(y_list) / n) ** 2) ** (1 / 2)
                     for s in range(0, n):
 
                         if s != l:
                             d = ((x_k1 - x_list[s]) ** 2 + (y_k1 - y_list[s]) ** 2) ** (1 / 2)
-                            distance.append(d)
+                            distance = np.append(distance, d)
 
                 except OverflowError:
                     pass
 
-    ax_list.append(ax)
-    ay_list.append(ay)
-
+    ax_list = np.append(ax_list, ax)
+    ay_list = np.append(ay_list, ay)
     return ax_list, ay_list

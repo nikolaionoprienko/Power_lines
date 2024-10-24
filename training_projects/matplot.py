@@ -1,4 +1,4 @@
-import numpy as np
+import numpy_learn as np
 import matplotlib.pyplot as plt
 import time
 from matplotlib.animation import FuncAnimation, ArtistAnimation
