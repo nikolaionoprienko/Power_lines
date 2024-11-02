@@ -1,126 +1,113 @@
 import numpy as np
+from numba import jit, prange
+import time
 
 
-def tension_calculation(sign_k, q, x, y, x_k1, y_k1, e_x, e_y):
-    e_x = (e_x +
-           sign_k * q * (x_k1 - x) / (
-                   ((x_k1 - x) ** 2 + (y_k1 - y) ** 2) ** (3 / 2))
-           )
+@jit(fastmath=True, nopython=True)
+def tension(number_of_iterations, x_list, y_list, q_list, sign_list,
+            x_mid, y_mid, max_distance, distance_sqr, distance_point_mid_sqr, i, ax, ay, k, x, y, l):
 
-    e_y = (e_y +
-           sign_k * q * (y_k1 - y) / (
-                   ((x_k1 - x) ** 2 + (y_k1 - y) ** 2) ** (3 / 2))
-           )
+    while (np.round(np.amin(distance_sqr), 3) >= 0.001) and \
+            (distance_point_mid_sqr <= max_distance) and \
+            (i <= number_of_iterations):
 
-    return e_x, e_y
+        # with objmode(start='f8'):
+        #     start = time.perf_counter()
+
+        try:
+            E_x = sign_list[k] * np.sum(
+                (q_list * (x - x_list)) / (((x - x_list) ** 2 + (y - y_list) ** 2) ** (3 / 2)))
+            E_y = sign_list[k] * np.sum(
+                (q_list * (y - y_list)) / (((x - x_list) ** 2 + (y - y_list) ** 2) ** (3 / 2)))
+
+            tg = E_y/E_x
+
+            if abs(tg) <= 1:
+                dx = np.sign(E_x) * 0.01
+                x = x + dx
+                y = y + tg * dx
+
+            else:
+                dy = np.sign(E_y) * 0.01
+                x = x + (1 / tg) * dy
+                y = y + dy
+        except:
+            pass
+
+        # with objmode(time_if='f8'):
+        #     time_if = time_if + time.perf_counter() - start
+
+        # with objmode(start='f8'):
+        #     start = time.perf_counter()
+
+        index = 2 * number_of_iterations * l + 2 + i
+
+        ax[index] = x
+        ay[index] = y
+
+        distance_sqr = ((x_list - x) ** 2 + (y_list - y) ** 2) ** (1 / 2)
+        distance_point_mid_sqr = ((x_mid - x) ** 2 + (y_mid - y) ** 2) ** (1 / 2)
+
+        i = i + 1
+
+        # with objmode(time_ind='f8'):
+        #     time_ind = time_ind + time.perf_counter() - start
+
+    return ax, ay
+        # , time_E, time_if, time_ind
 
 
-def point_calculation(x_k1, y_k1, e_x, e_y, i):
-    sin = (e_y / (e_y ** 2 + e_x ** 2) ** (1 / 2))
-    cos = (e_x / (e_y ** 2 + e_x ** 2) ** (1 / 2))
-    tg = e_y / e_x
+def power_lines(number_of_lines, number_of_iterations, n, x_list, y_list, q_list, sign_list,
+                x_mid, y_mid, max_distance):
+    ax = np.full(2 * number_of_iterations, np.nan, dtype=np.float64)
+    ay = np.full(2 * number_of_iterations, np.nan, dtype=np.float64)
 
-    if ((abs(tg) <= 1) and (sin >= 0) and (cos >= 0)) or \
-            ((abs(tg) <= 1) and (sin <= 0) and (cos >= 0)):
-        dx = 0.01
-        dy = tg * dx
-        x_k1 = x_k1 + dx
-        y_k1 = y_k1 + dy
-    elif abs(tg) <= 1:
-        dx = -0.01
-        dy = tg * dx
-        x_k1 = x_k1 + dx
-        y_k1 = y_k1 + dy
-    elif ((abs(tg) > 1) and (sin >= 0) and (cos >= 0)) or \
-            ((abs(tg) > 1) and (sin >= 0) and (cos <= 0)):
-        dy = 0.01
-        dx = (1 / tg) * dy
-        x_k1 = x_k1 + dx
-        y_k1 = y_k1 + dy
-    else:
-        dy = -0.01
-        dx = (1 / tg) * dy
-        x_k1 = x_k1 + dx
-        y_k1 = y_k1 + dy
+    ax_list = np.full(2 * number_of_lines * number_of_iterations * (n + 1), np.nan, dtype=np.float64)
+    ay_list = np.full(2 * number_of_lines * number_of_iterations * (n + 1), np.nan, dtype=np.float64)
 
-    i = i + 1
+    # time_E, time_if, time_ind = 0, 0, 0
 
-    return x_k1, y_k1, i
-
-
-def power_lines(n, x_list, y_list, q_list, sign_list):
-    ax = np.array([], dtype=np.float64)
-    ay = np.array([], dtype=np.float64)
-    ax_list = np.array([], dtype=np.float64)
-    ay_list = np.array([], dtype=np.float64)
     R = 0.01
+    time_f = 0
+    for k in prange(n):
 
-    for k in range(0, n):
+        for_slice = 2 * number_of_lines * number_of_iterations * k
+        ax_list[for_slice:(for_slice + np.size(ax))] = ax
+        ay_list[(2 * number_of_lines * number_of_iterations * k):(for_slice + np.size(ay))] = ay
 
-        x_k = x_list[k]
-        y_k = y_list[k]
-        sign_k = sign_list[k]
+        ax = np.full(2 * number_of_iterations * number_of_lines, np.nan, dtype=np.float64)
+        ay = np.full(2 * number_of_iterations * number_of_lines, np.nan, dtype=np.float64)
 
-        ax_list = np.append(ax_list, ax)
-        ay_list = np.append(ay_list, ay)
+        for l in prange(number_of_lines):
+            ax[2 * number_of_iterations * l] = np.nan
+            ay[2 * number_of_iterations * l] = np.nan
 
-        ax = np.array([], dtype=np.float64)
-        ay = np.array([], dtype=np.float64)
+            x = x_list[k] + R * np.cos(2 * np.pi * l / number_of_lines)
+            y = y_list[k] + R * np.sin(2 * np.pi * l / number_of_lines)
 
-        for l in range(0, 12):
+            ax[2 * number_of_iterations * l + 1] = x_list[k]
+            ay[2 * number_of_iterations * l + 1] = y_list[k]
+            ax[2 * number_of_iterations * l + 2] = x
+            ay[2 * number_of_iterations * l + 2] = y
 
-            x_k1 = x_k + R * np.cos(2 * np.pi * l / 12)
-            y_k1 = y_k + R * np.sin(2 * np.pi * l / 12)
-
-            ax = np.append(ax, np.nan)
-            ay = np.append(ay, np.nan)
-
-            ax = np.append(ax, x_k)
-            ax = np.append(ax, x_k1)
-            ay = np.append(ay, y_k)
-            ay = np.append(ay, y_k1)
-
-            distance = np.array([10], dtype=np.float64)
-            d_dot_mid = ((x_k1 - sum(x_list) / n) ** 2 + (y_k1 - sum(y_list) / n) ** 2) ** (1 / 2)
-            for m in range(0, n):
-
-                if (m != l) and (n != 1):
-                    d = ((x_k1 - x_list[m]) ** 2 + (y_k1 - y_list[m]) ** 2) ** (1 / 2)
-                    distance = np.append(distance, d)
-                    if k == 0:
-                        max_d = 3 * np.max(distance)
+            distance_sqr = ((x_list - x) ** 2 + (y_list - y) ** 2) ** (1 / 2)
+            distance_point_mid_sqr = ((x_mid - x) ** 2 + (y_mid - y) ** 2) ** 2
 
             i = 0
 
-            while (round(np.min(distance), 3) >= 0.01) and \
-                    (max_d > d_dot_mid) and (i <= 1000):
+            start = time.time()
+            ax, ay = tension(number_of_iterations, x_list, y_list, q_list, sign_list,
+                             x_mid, y_mid, max_distance, distance_sqr, distance_point_mid_sqr, i, ax, ay, k, x, y, l)
+            end = time.time()
+            time_f = time_f + (end - start)
 
-                E_x = 0
-                E_y = 0
+    for_slice = 2 * number_of_lines * number_of_iterations * n
+    ax_list[for_slice:(for_slice + np.size(ax))] = ax
+    ay_list[for_slice:(for_slice + np.size(ax))] = ay
+    print(time_f)
 
-                try:
-                    for o in range(0, n):
-                        q_o = q_list[o]
-                        x_o = x_list[o]
-                        y_o = y_list[o]
+    # print(time_E)
+    # print(time_if)
+    # print(time_ind)
 
-                        E_x, E_y = tension_calculation(sign_k, q_o, x_o, y_o, x_k1, y_k1, E_x, E_y)
-
-                    x_k1, y_k1, i = point_calculation(x_k1, y_k1, E_x, E_y, i)
-
-                    ax = np.append(ax, x_k1)
-                    ay = np.append(ay, y_k1)
-
-                    d_dot_mid = ((x_k1 - sum(x_list) / n) ** 2 + (y_k1 - sum(y_list) / n) ** 2) ** (1 / 2)
-                    for s in range(0, n):
-
-                        if s != l:
-                            d = ((x_k1 - x_list[s]) ** 2 + (y_k1 - y_list[s]) ** 2) ** (1 / 2)
-                            distance = np.append(distance, d)
-
-                except OverflowError:
-                    pass
-
-    ax_list = np.append(ax_list, ax)
-    ay_list = np.append(ay_list, ay)
     return ax_list, ay_list

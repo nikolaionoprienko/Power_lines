@@ -1,9 +1,6 @@
-import asyncio
-
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-import func
 from func import power_lines
 
 
@@ -22,13 +19,12 @@ while check_1 == 0:
     except:
         print("Можно вводить только натуральные числа, попробуйте ещё раз.")
 
-x_list = []     # Строка с координатами зарядов по оси Ох
-y_list = []     # Строка с координатами зарядов по оси Оу
-q_list = []     # Строка с значениями заряда
-c_list = []     # Строка с цветами зарядов (красный -- положительный, синий -- отрицательный)
-sign_list = []  # Строка со знаками зарядов
-s_list = []     # Строка с видимыми размерами заряда (чтобы отличать на графике какой заряд больше по модулю, какой меньше)
-
+x_list = np.zeros(n, dtype=np.float64)     # Строка с координатами зарядов по оси Ох
+y_list = np.zeros(n, dtype=np.float64)     # Строка с координатами зарядов по оси Оу
+q_list = np.zeros(n, dtype=np.float64)      # Строка с значениями заряда
+sign_list = np.zeros(n, dtype=np.float64)   # Строка со знаками зарядов
+s_list = np.zeros(n, dtype=np.float64)      # Строка с видимыми размерами заряда (чтобы отличать на графике какой заряд больше по модулю, какой меньше)
+c_list = []      # Строка с цветами зарядов (красный -- положительный, синий -- отрицательный)
 
 print("\033[31m\033[4m{}".format("Пока что не следует вводить значения координат такие, чтобы расстояние между зарядами привышало 10 м."), "\033[0m\n")
 
@@ -55,19 +51,20 @@ for i in range(0, n):  # цикл для заполнения начальных
 
     s = abs(q) * 40
 
-    x_list.append(x)
-    y_list.append(y)
-    q_list.append(q)
+    x_list[i] = x
+    y_list[i] = y
+    q_list[i] = q
+    sign_list[i] = sign
+    s_list[i] = s
     c_list.append(c)
-    sign_list.append(sign)
-    s_list.append(s)
 
-x_list = np.array(x_list)
-y_list = np.array(y_list)
-q_list = np.array(q_list)
-c_list = np.array(c_list)
-sign_list = np.array(sign_list)
-s_list = np.array(s_list)
+# Параметры графики
+
+number_of_lines = 12
+number_of_iterations = 1000
+drawing_range = 100
+x_mid, y_mid = np.sum(x_list) / n, np.sum(y_list) / n
+max_distance = (drawing_range**2) * np.amax((x_list - x_mid)**2 + (y_list - y_mid)**2)
 
 start = time.time()  # Начало отсчёта времени выполнения вычислений
 
@@ -85,13 +82,15 @@ axis.spines['right'].set_color("w")
 axis.tick_params(colors='w')  # Окрашивание рисок
 
 def_time_start = time.time()
-ax_list, ay_list = power_lines(n, x_list, y_list, q_list, sign_list)
+
+ax_list, ay_list = power_lines(number_of_lines, number_of_iterations, n, x_list, y_list, q_list, sign_list,
+                               x_mid, y_mid, max_distance)
+
 def_time_end = time.time()
 def_time_complite = def_time_end - def_time_start
 
 axis.scatter(x_list, y_list, s=s_list, c=c_list, edgecolors="w", zorder=1)
 axis.plot(ax_list, ay_list, linewidth=0.5, c="#00ffff7f", zorder=-1)
-
 end = time.time()  # Конец отсчёта времени выполнения вычислений
 print(f"На вычисления было затрачено {round(end - start, 4)} с."
       f" Из них {round(def_time_complite/(end - start) * 100, 1)} % на вычисления координат.")
