@@ -14,6 +14,7 @@ def tension(number_of_iterations, x_list, y_list, q_list, sign_list,
         # with objmode(start='f8'):
         #     start = time.perf_counter()
 
+        # Пропуск любых возможных ошибок
         try:
             E_x = sign_list[k] * np.sum(
                 (q_list * (x - x_list)) / (((x - x_list) ** 2 + (y - y_list) ** 2) ** (3 / 2)))

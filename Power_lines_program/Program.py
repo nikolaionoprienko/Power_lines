@@ -10,6 +10,7 @@ n = 0
 
 check_1 = 0  # Переменная и цикл для проверки правильности введённого значения
 while check_1 == 0:
+    # noinspection PyBroadException
     try:
         n = int(input("Введите количество зарядов: "))
         check_1 = 1
@@ -21,17 +22,18 @@ while check_1 == 0:
 
 x_list = np.zeros(n, dtype=np.float64)     # Строка с координатами зарядов по оси Ох
 y_list = np.zeros(n, dtype=np.float64)     # Строка с координатами зарядов по оси Оу
-q_list = np.zeros(n, dtype=np.float64)      # Строка с значениями заряда
+q_list = np.zeros(n, dtype=np.float64)      # Строка со значениями заряда
 sign_list = np.zeros(n, dtype=np.float64)   # Строка со знаками зарядов
 s_list = np.zeros(n, dtype=np.float64)      # Строка с видимыми размерами заряда (чтобы отличать на графике какой заряд больше по модулю, какой меньше)
 c_list = []      # Строка с цветами зарядов (красный -- положительный, синий -- отрицательный)
 
-print("\033[31m\033[4m{}".format("Пока что не следует вводить значения координат такие, чтобы расстояние между зарядами привышало 10 м."), "\033[0m\n")
+print("\033[31m\033[4m{}".format("Пока что не следует вводить значения координат такие, чтобы расстояние между зарядами превышало 10 м."), "\033[0m\n")
 
 for i in range(0, n):  # цикл для заполнения начальных условий (заполняются строки с 10 строчки кода по 15)
 
     check_2 = 0  # Переменная и цикл для проверки правильности введённого значения
     while check_2 == 0:
+        # noinspection PyBroadException
         try:
             x = float(input(f"Введите координату x {i + 1}-го заряда: "))
             y = float(input(f"Введите координату y {i + 1}-го заряда: "))
@@ -87,13 +89,13 @@ ax_list, ay_list = power_lines(number_of_lines, number_of_iterations, n, x_list,
                                x_mid, y_mid, max_distance)
 
 def_time_end = time.time()
-def_time_complite = def_time_end - def_time_start
+def_time = def_time_end - def_time_start
 
 axis.scatter(x_list, y_list, s=s_list, c=c_list, edgecolors="w", zorder=1)
 axis.plot(ax_list, ay_list, linewidth=0.5, c="#00ffff7f", zorder=-1)
 end = time.time()  # Конец отсчёта времени выполнения вычислений
 print(f"На вычисления было затрачено {round(end - start, 4)} с."
-      f" Из них {round(def_time_complite/(end - start) * 100, 1)} % на вычисления координат.")
+      f" Из них {round(def_time/(end - start) * 100, 1)} % на вычисления координат.")
 
 plt.show()
 
