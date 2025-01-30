@@ -39,7 +39,10 @@ def slider(display, position, slider_len, units, active_unit, mouse, LKM, variab
 FPS = 60
 height = 720
 width = 1280
+height_field = height - 100
+width_field = width - 400
 number_of_lines = 12
+number_of_iterations = 1
 
 GRAY = (60, 63, 65)
 DARK_GRAY = (43, 43, 43)
@@ -52,6 +55,8 @@ pg.init()
 
 display = pg.display.set_mode((width, height), RESIZABLE)
 virtual_display = Surface((width, height))
+field = Surface((width_field, height_field))
+field_rect = field.get_rect(topleft=(50, 50))
 current_size = display.get_size()
 info = pg.display.Info()
 FULLSCREEN_SIZE = (info.current_w, info.current_h)
@@ -69,6 +74,8 @@ q = slider(virtual_display, (900, 50), 100, 10, q, mouse, LKM, q)
 pg.display.update()
 
 while play:
+    field.fill(DARK_GRAY)
+
     for i in pg.event.get():
         if i.type == pg.QUIT:
             play = False
@@ -78,6 +85,10 @@ while play:
         if i.type == pg.MOUSEBUTTONUP:
             if i.button == 1:
                 LKM = False
+            if field_rect.collidepoint(mouse):
+                if i.button == 1:
+                    pg.draw.circle(field, RED, mouse, q * 10)
+                    print(True)
         if i.type == pg.VIDEORESIZE:
             current_size = i.size
         if i.type == pg.KEYDOWN:
@@ -92,14 +103,16 @@ while play:
                     display = pg.display.set_mode(current_size, RESIZABLE)
 
     virtual_display.fill(GRAY)
+    virtual_display.blit(field, (50, 50))
     mouse = pg.mouse.get_pos()
-    print(mouse)
-    q = slider(virtual_display,  (330,  470), 260, 20, q, mouse, LKM, q)
-    number_of_lines = slider(virtual_display, (330, 400), 260, 20, number_of_lines, mouse,
-                             LKM, number_of_lines)
 
     scaled_display = pg.transform.scale(virtual_display, current_size)
     display.blit(scaled_display, (0, 0))
+    q = slider(display, (975, 100), 260, 20, q, mouse, LKM, q)
+    number_of_lines = slider(display, (975, 200), 260, 20, number_of_lines, mouse,
+                             LKM, number_of_lines)
+    number_of_iterations = slider(display, (975, 300), 260, 20, number_of_iterations, mouse,
+                             LKM, number_of_iterations)
 
     clock.tick(FPS)
     pg.display.update()
