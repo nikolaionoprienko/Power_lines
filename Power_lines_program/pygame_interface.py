@@ -1,25 +1,18 @@
 import pygame as pg
-from mpl_toolkits.mplot3d.proj3d import transform
 from pygame import RESIZABLE, Surface, FULLSCREEN
 from pygame.display import set_caption, is_fullscreen
 import numpy as np
-from func import power_lines
+from func_for_pg import power_lines
+
 
 pg.init()
 
-class Сharge:
-    q = None
-    x_q = None
-    y_q = None
-    color_q = None
-    size = None
-
-    def __init__(self, q, x_q, y_q, color_q, size):
-        self.q = q
-        self.x_q = x_q
-        self.y_q = y_q
-        self.color_q = color_q
-        self.size = size
+x_list = np.array(())
+y_list = np.array(())
+q_list = np.array(())
+sign_list = np.array(())
+s_list = []
+c_list = []
 
 q = 1
 
@@ -44,7 +37,7 @@ width = 1280
 height_field = 670
 width_field = 860
 number_of_lines = 12
-number_of_iterations = 1
+number_of_iterations = 1000
 
 GRAY = (60, 63, 65)
 DARK_GRAY = (43, 43, 43)
@@ -87,7 +80,7 @@ pg.display.update()
 
 while play:
 
-    field.fill(DARK_GRAY)
+    display.fill(GRAY)
 
     # Обработка событий
     for i in pg.event.get():
@@ -100,14 +93,28 @@ while play:
         if i.type == pg.MOUSEBUTTONDOWN:
             if i.button == 1:
                 LKM = True
+            if field_rect.collidepoint(mouse):
+                if i.button == 1:
+                    x_list = np.append(x_list, mouse[0] - scal_x * 25)
+                    y_list = np.append(y_list, mouse[1] - scal_y * 25)
+                    q_list = np.append(q_list, q)
+                    sign_list = np.append(sign_list, 1)
+                    s_list.append(q * 4)
+                    c_list.append(RED)
+                if i.button == 3:
+                    x_list = np.append(x_list, mouse[0] - scal_x * 25)
+                    y_list = np.append(y_list, mouse[1] - scal_y * 25)
+                    q_list = np.append(q_list, -1 * q)
+                    sign_list = np.append(sign_list, -1)
+                    s_list.append(q * 4)
+                    c_list.append(BLUE)
 
         if i.type == pg.MOUSEBUTTONUP:
             if i.button == 1:
                 LKM = False
-            if field_rect.collidepoint(mouse):
-                if i.button == 1:
-                    pg.draw.circle(field, RED, mouse, q * 10)
-                    print(True)
+
+
+
 
         # События изменения размеров окна
         if i.type == pg.VIDEORESIZE:
@@ -124,12 +131,19 @@ while play:
                 else:
                     current_size = last_size
                     display = pg.display.set_mode(current_size, RESIZABLE)
+            if i.key == pg.K_ESCAPE:
+                x_list = np.array(())
+                y_list = np.array(())
+                q_list = np.array(())
+                sign_list = np.array(())
+                s_list = []
+                c_list = []
+
 
     mouse = pg.mouse.get_pos()
 
-
+    # Отображение текстов
     virtual_display.fill(GRAY)
-    virtual_display.blit(field, (25, 25))
     virtual_display.blit(string_0, (905, 40))
     virtual_display.blit(string_1, (905, 65))
     virtual_display.blit(string_2, (905, 90))
@@ -146,23 +160,50 @@ while play:
     virtual_display.blit(string_9, (1200, 285))
     virtual_display.blit(string_10, (1200, 351))
 
-
-    pg.draw.rect(virtual_display, WHITE, (25, 25, 860, 670), 3)
-
-    scaled_display = pg.transform.scale(virtual_display, current_size)
-    display.blit(scaled_display, (0, 0))
-
-    # Слайдеры
-
+    # Отображение на дисплей других элементов
     scal_x = current_size[0] / width
     scal_y = current_size[1] / height
 
+    pg.draw.rect(virtual_display, WHITE, (20, 20, 870, 680), 7)
+    field = pg.transform.scale(field, (width_field * scal_x, height_field * scal_y))
+    scaled_display = pg.transform.scale(virtual_display, current_size)
+    display.blit(scaled_display, (0, 0))
+    display.blit(field, (25 * scal_x, 25 * scal_y))
+    field_rect = field.get_rect(topleft=(25 * scal_x, 25 * scal_y))
+    field.fill(DARK_GRAY)
+
+
+    # Слайдеры
     q = slider(display, [scal_x * 925, scal_y * 235], scal_x * 255, 20, q, mouse, LKM, q)
 
-    number_of_lines = slider(display, [scal_x * 925, scal_y * 300], scal_x * 255, 20, number_of_lines, mouse,
-                             LKM, number_of_lines)
-    number_of_iterations = slider(display, [scal_x * 925, scal_y * 365], scal_x * 255, 20, number_of_iterations, mouse,
-                             LKM, number_of_iterations)
+    number_of_lines = int(slider(display, [scal_x * 925, scal_y * 300], scal_x * 255, 20, number_of_lines, mouse,
+                             LKM, number_of_lines))
+    number_of_iterations = int(slider(display, [scal_x * 925, scal_y * 365], scal_x * 255, 20, number_of_iterations//1000, mouse,
+                             LKM, number_of_iterations/1000) * 1000)
+
+    # Отображение зарядов и линий
+    for i in range(len(q_list)):
+        pg.draw.circle(field, c_list[i], [x_list[i], y_list[i]], s_list[i])
+        pg.draw.circle(field, WHITE, [x_list[i], y_list[i]], s_list[i], 2)
+
+    n = len(q_list)
+    x_list = np.array(x_list)
+    y_list = np.array(y_list)
+    q_list = np.array(q_list)
+    sign_list = np.array(sign_list)
+    x_mid, y_mid = 0, 0
+    max_distance = 10000
+    ax, ay = power_lines(number_of_lines, number_of_iterations, n, x_list, y_list, q_list, sign_list,
+                x_mid, y_mid, max_distance)
+
+    points = np.column_stack((ax, ay))
+    points = points[~np.isnan(points).any(axis=1)]
+
+
+    if points.shape[0] >= 2:
+            pg.draw.aalines(field, TURQUOISE, False, points)
+
+
 
     clock.tick(FPS)
     pg.display.update()
