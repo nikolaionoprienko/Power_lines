@@ -182,9 +182,6 @@ while play:
                              LKM, number_of_iterations/1000) * 1000)
 
     # Отображение зарядов и линий
-    for i in range(len(q_list)):
-        pg.draw.circle(field, c_list[i], [x_list[i], y_list[i]], s_list[i])
-        pg.draw.circle(field, WHITE, [x_list[i], y_list[i]], s_list[i], 2)
 
     n = len(q_list)
     x_list = np.array(x_list)
@@ -193,17 +190,16 @@ while play:
     sign_list = np.array(sign_list)
     x_mid, y_mid = 0, 0
     max_distance = 10000
-    ax, ay = power_lines(number_of_lines, number_of_iterations, n, x_list, y_list, q_list, sign_list,
+    segments = power_lines(number_of_lines, number_of_iterations, n, x_list, y_list, q_list, sign_list,
                 x_mid, y_mid, max_distance)
 
-    points = np.column_stack((ax, ay))
-    points = points[~np.isnan(points).any(axis=1)]
+    if segments.shape[0] >= 2:
+        for segment in segments:
+            pg.draw.aalines(field, TURQUOISE, False, segment)
 
-
-    if points.shape[0] >= 2:
-            pg.draw.aalines(field, TURQUOISE, False, points)
-
-
+    for i in range(len(q_list)):
+        pg.draw.circle(field, c_list[i], [x_list[i], y_list[i]], s_list[i])
+        pg.draw.circle(field, WHITE, [x_list[i], y_list[i]], s_list[i], 2)
 
     clock.tick(FPS)
     pg.display.update()

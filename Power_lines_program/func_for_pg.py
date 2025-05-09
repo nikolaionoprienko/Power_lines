@@ -4,7 +4,9 @@ from numba import jit, prange
 
 @jit(fastmath=True, nopython=True)
 def tension(number_of_iterations, x_list, y_list, q_list, sign_list,
-            x_mid, y_mid, max_distance, distance_sqr, distance_point_mid_sqr, i, ax, ay, k, x, y, l):
+            x_mid, y_mid, max_distance, distance_sqr, distance_point_mid_sqr, ax, ay, k, x, y, l):
+
+    i = 0
 
     while np.amin(distance_sqr) >= 1 and \
             i <= number_of_iterations:
@@ -29,10 +31,8 @@ def tension(number_of_iterations, x_list, y_list, q_list, sign_list,
         except:
             pass
 
-        index = 2 * number_of_iterations * l + 2 + i
-
-        ax[index] = x
-        ay[index] = y
+        ax[i + 2] = x
+        ay[i + 2] = y
 
         distance_sqr = ((x_list - x) ** 2 + (y_list - y) ** 2) ** (1 / 2)
         distance_point_mid_sqr = ((x_mid - x) ** 2 + (y_mid - y) ** 2) ** (1 / 2)
@@ -45,44 +45,34 @@ def tension(number_of_iterations, x_list, y_list, q_list, sign_list,
 
 def power_lines(number_of_lines, number_of_iterations, n, x_list, y_list, q_list, sign_list,
                 x_mid, y_mid, max_distance):
-    ax = np.full(2 * number_of_iterations, np.nan, dtype=np.float64)
-    ay = np.full(2 * number_of_iterations, np.nan, dtype=np.float64)
 
-    ax_list = np.full(2 * number_of_lines * number_of_iterations * (n + 1), np.nan, dtype=np.float64)
-    ay_list = np.full(2 * number_of_lines * number_of_iterations * (n + 1), np.nan, dtype=np.float64)
-
+    segments = np.full((number_of_lines * n + n, number_of_iterations + 2, 2), np.nan, dtype=np.float64)
     R = 2
+    iteration = -1
+
     for k in prange(n):
-
-        for_slice = 2 * number_of_lines * number_of_iterations * k
-        ax_list[for_slice:(for_slice + np.size(ax))] = ax
-        ay_list[(2 * number_of_lines * number_of_iterations * k):(for_slice + np.size(ay))] = ay
-
-        ax = np.full(2 * number_of_iterations * number_of_lines, np.nan, dtype=np.float64)
-        ay = np.full(2 * number_of_iterations * number_of_lines, np.nan, dtype=np.float64)
-
+        iteration += 1
         for l in prange(number_of_lines):
-            ax[2 * number_of_iterations * l] = np.nan
-            ay[2 * number_of_iterations * l] = np.nan
+
+            ax = np.full(number_of_iterations + 2, np.nan, dtype=np.float64)
+            ay = np.full(number_of_iterations + 2, np.nan, dtype=np.float64)
 
             x = x_list[k] + R * np.cos(2 * np.pi * l / number_of_lines)
             y = y_list[k] + R * np.sin(2 * np.pi * l / number_of_lines)
 
-            ax[2 * number_of_iterations * l + 1] = x_list[k]
-            ay[2 * number_of_iterations * l + 1] = y_list[k]
-            ax[2 * number_of_iterations * l + 2] = x
-            ay[2 * number_of_iterations * l + 2] = y
+            ax[0] = x_list[k]
+            ay[0] = y_list[k]
+            ax[1] = x
+            ay[1] = y
 
             distance_sqr = ((x_list - x) ** 2 + (y_list - y) ** 2) ** (1 / 2)
             distance_point_mid_sqr = ((x_mid - x) ** 2 + (y_mid - y) ** 2) ** 2
 
-            i = 0
-
             ax, ay = tension(number_of_iterations, x_list, y_list, q_list, sign_list,
-                             x_mid, y_mid, max_distance, distance_sqr, distance_point_mid_sqr, i, ax, ay, k, x, y, l)
+                             x_mid, y_mid, max_distance, distance_sqr, distance_point_mid_sqr, ax, ay, k, x, y, l)
 
-    for_slice = 2 * number_of_lines * number_of_iterations * n
-    ax_list[for_slice:(for_slice + np.size(ax))] = ax
-    ay_list[for_slice:(for_slice + np.size(ax))] = ay
+            segments[iteration] = np.column_stack((ax, ay))
 
-    return ax_list, ay_list
+            iteration += 1
+
+    return segments
