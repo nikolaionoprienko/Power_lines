@@ -5,8 +5,6 @@ import numpy as np
 from func_for_pg import power_lines
 
 
-pg.init()
-
 x_list = np.array(())
 y_list = np.array(())
 q_list = np.array(())
@@ -15,6 +13,8 @@ s_list = []
 c_list = []
 
 q = 1
+
+pg.init()
 
 def slider(display, position, slider_len, units, active_unit, mouse, LKM, variable):
     pg.draw.line(display, WHITE, position, (position[0] + slider_len, position[1]), 3)
@@ -56,7 +56,7 @@ string_3 = f1.render('Очистить экран от зарядов: ESC', Tru
 string_4 = f1.render('Развернуть на полный экран: F', True, WHITE)
 string_5 = f2.render('Модуль заряда', True, WHITE)
 string_6 = f3.render('Количество линий на заряд', True, WHITE)
-string_7 = f3.render('Шаг моделирования', True, WHITE)
+string_7 = f3.render('Количество итераций', True, WHITE)
 
 # Поверхности и их настройки
 display = pg.display.set_mode((width, height), RESIZABLE)
@@ -113,9 +113,6 @@ while play:
             if i.button == 1:
                 LKM = False
 
-
-
-
         # События изменения размеров окна
         if i.type == pg.VIDEORESIZE:
             current_size = i.size
@@ -139,7 +136,6 @@ while play:
                 s_list = []
                 c_list = []
 
-
     mouse = pg.mouse.get_pos()
 
     # Отображение текстов
@@ -151,7 +147,7 @@ while play:
     virtual_display.blit(string_4, (905, 140))
     virtual_display.blit(string_5, (970, 195))
     virtual_display.blit(string_6, (918, 263))
-    virtual_display.blit(string_7, (955, 330))
+    virtual_display.blit(string_7, (950, 330))
 
     string_8 = f3.render(str(q), True, TURQUOISE)
     string_9 = f3.render(str(number_of_lines), True, TURQUOISE)
@@ -178,8 +174,8 @@ while play:
 
     number_of_lines = int(slider(display, [scal_x * 925, scal_y * 300], scal_x * 255, 20, number_of_lines, mouse,
                              LKM, number_of_lines))
-    number_of_iterations = int(slider(display, [scal_x * 925, scal_y * 365], scal_x * 255, 20, number_of_iterations//1000, mouse,
-                             LKM, number_of_iterations/1000) * 1000)
+    number_of_iterations = int(slider(display, [scal_x * 925, scal_y * 365], scal_x * 255, 20, number_of_iterations//200, mouse,
+                             LKM, number_of_iterations/200) * 200)
 
     # Отображение зарядов и линий
 
@@ -188,10 +184,7 @@ while play:
     y_list = np.array(y_list)
     q_list = np.array(q_list)
     sign_list = np.array(sign_list)
-    x_mid, y_mid = 0, 0
-    max_distance = 10000
-    segments = power_lines(number_of_lines, number_of_iterations, n, x_list, y_list, q_list, sign_list,
-                x_mid, y_mid, max_distance)
+    segments = power_lines(number_of_lines, number_of_iterations, n, x_list, y_list, q_list, sign_list)
 
     if segments.shape[0] >= 2:
         for segment in segments:

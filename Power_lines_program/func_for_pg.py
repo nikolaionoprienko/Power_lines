@@ -4,7 +4,7 @@ from numba import jit, prange
 
 @jit(fastmath=True, nopython=True)
 def tension(number_of_iterations, x_list, y_list, q_list, sign_list,
-            x_mid, y_mid, max_distance, distance_sqr, distance_point_mid_sqr, ax, ay, k, x, y, l):
+            distance_sqr, ax, ay, k, x, y, l):
 
     i = 0
 
@@ -35,7 +35,6 @@ def tension(number_of_iterations, x_list, y_list, q_list, sign_list,
         ay[i + 2] = y
 
         distance_sqr = ((x_list - x) ** 2 + (y_list - y) ** 2) ** (1 / 2)
-        distance_point_mid_sqr = ((x_mid - x) ** 2 + (y_mid - y) ** 2) ** (1 / 2)
 
         i = i + 1
 
@@ -43,8 +42,7 @@ def tension(number_of_iterations, x_list, y_list, q_list, sign_list,
 
 
 
-def power_lines(number_of_lines, number_of_iterations, n, x_list, y_list, q_list, sign_list,
-                x_mid, y_mid, max_distance):
+def power_lines(number_of_lines, number_of_iterations, n, x_list, y_list, q_list, sign_list):
 
     segments = np.full((number_of_lines * n + n, number_of_iterations + 2, 2), np.nan, dtype=np.float64)
     R = 2
@@ -66,10 +64,9 @@ def power_lines(number_of_lines, number_of_iterations, n, x_list, y_list, q_list
             ay[1] = y
 
             distance_sqr = ((x_list - x) ** 2 + (y_list - y) ** 2) ** (1 / 2)
-            distance_point_mid_sqr = ((x_mid - x) ** 2 + (y_mid - y) ** 2) ** 2
 
             ax, ay = tension(number_of_iterations, x_list, y_list, q_list, sign_list,
-                             x_mid, y_mid, max_distance, distance_sqr, distance_point_mid_sqr, ax, ay, k, x, y, l)
+                             distance_sqr, ax, ay, k, x, y, l)
 
             segments[iteration] = np.column_stack((ax, ay))
 
