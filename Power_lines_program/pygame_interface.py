@@ -5,13 +5,13 @@ import numpy as np
 from func_for_pg import power_lines, movement, button, vec, slider
 
 # предварительное создание некоторых "физических" констант
-x_list = np.array(())
-y_list = np.array(())
-q_list = np.array(())
-m_list = np.array(())
-vx_list = np.array(())
-vy_list = np.array(())
-sign_list = np.array(())
+x_list = np.array([])
+y_list = np.array([])
+q_list = np.array([])
+m_list = np.array([])
+vx_list = np.array([])
+vy_list = np.array([])
+sign_list = np.array([])
 s_list = []
 c_list = []
 power_lines_simulation = True
@@ -107,7 +107,10 @@ while play:
                     q_list = np.append(q_list, q)
                     m_list = np.append(m_list, m)
                     sign_list = np.append(sign_list, 1)
-                    s_list.append(m/100 + 6)
+                    if m != 10**9:
+                        s_list.append(m/100 + 6)
+                    else:
+                        s_list.append(20)
                     c_list.append((q + 155, 48, 68))
 
                     # Начало вектора начальной скорости
@@ -120,7 +123,10 @@ while play:
                     q_list = np.append(q_list, -1 * q)
                     m_list = np.append(m_list, m)
                     sign_list = np.append(sign_list, -1)
-                    s_list.append(m/100 + 6)
+                    if m != 10**9:
+                        s_list.append(m/100 + 6)
+                    else:
+                        s_list.append(20)
                     c_list.append((28, 48, q + 155))
 
                     PKM = True
@@ -192,7 +198,10 @@ while play:
     virtual_display.blit(string_7, (950, 397))
 
     string_8 = f1.render(str(q) + ' мкКл', True, TURQUOISE)
-    string_8_8 = f1.render(str(m) + ' г', True, TURQUOISE)
+    if m != 10**10:
+        string_8_8 = f1.render(str(m) + ' г', True, TURQUOISE)
+    else:
+        string_8_8 = f1.render("infinity", True, TURQUOISE)
     string_9 = f1.render(str(number_of_lines), True, TURQUOISE)
     string_10 = f1.render(str(number_of_iterations), True, TURQUOISE)
     virtual_display.blit(string_8, (1200, 220))
@@ -216,7 +225,14 @@ while play:
     # Слайдеры
     q = slider(display, [scal_x * 925, scal_y * 235], scal_x * 255, 50, q/2, mouse, LKM, q/2, 5) * 2
 
-    m = round(slider(display, [scal_x * 925, scal_y * 300], scal_x * 255, 250, m/4, mouse, LKM, m/4, 20) * 4, 1)
+    if m == 10**10:
+        m = 1004
+
+    m = round(slider(display, [scal_x * 925, scal_y * 300], scal_x * 255, 251, m/4, mouse, LKM, m/4, 20) * 4, 1)
+
+    if m == 1004:
+        m = 10**10
+
 
     number_of_lines = int(slider(display, [scal_x * 925, scal_y * 365], scal_x * 255, 20, number_of_lines, mouse,
                              LKM, number_of_lines, 2))
