@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-from func import power_lines
+from Power_lines_program.old_version.func import power_lines
 
 
 print("\033[33m{}\033[0m".format("Вас приветствует программа по численному моделированию электростатического поля нескольких точечных зарядов. \n"))

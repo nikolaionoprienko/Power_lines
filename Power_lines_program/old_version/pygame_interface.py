@@ -2,7 +2,7 @@ import pygame as pg
 from pygame import RESIZABLE, Surface, FULLSCREEN
 from pygame.display import set_caption, is_fullscreen
 import numpy as np
-from func_for_pg import power_lines, movement, button, vec, slider
+from Power_lines_program.old_version.func_for_pg import power_lines, movement, button, vec, slider
 
 # предварительное создание некоторых "физических" констант
 x_list = np.array([])
