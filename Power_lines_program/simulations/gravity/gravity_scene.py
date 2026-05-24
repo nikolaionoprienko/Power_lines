@@ -8,7 +8,7 @@ from core.settings import (FPS, WINDOW_WIDTH, WINDOW_HEIGHT, FIELD_HEIGHT, FIELD
 from engine.button import button
 from engine.slider import slider
 from engine.vector import vec
-from simulations.gravity.physics import movement
+from simulations.gravity.physics import movement, collision
 from simulations.gravity.rendering import draw_scene
 
 class GravityScene:
@@ -25,6 +25,7 @@ class GravityScene:
         self.s_list = []
         self.c_list = []
         self.movement_simulation = True
+        self.collision_simulation = True
         self.LKM_ONE = False
 
         self.m = DEFAULT_M
@@ -92,7 +93,7 @@ class GravityScene:
         self.x_list = np.append(self.x_list, x)
         self.y_list = np.append(self.y_list, y)
         self.m_list = np.append(self.m_list, self.m)
-        self.s_list.append(self.m/100 + 6)
+        self.s_list.append((3 * self.m)/(4 * np.pi * 5) + 4)
         self.c_list.append((155, 48, 68))
 
     def add_velocity_vector(self, mouse_pos):
@@ -150,6 +151,11 @@ class GravityScene:
         self.m = round(slider(self.display, [self.scal_x * 925, self.scal_y * 235], self.scal_x * 255, 251,
                               self.m / 4, self.mouse, self.LKM, self.m / 4, 20) * 4, 1)
 
+        self.collision_simulation = button(self.display, (self.scal_x * 925, self.scal_y * 450),
+                                          self.scal_x * 255, self.scal_y * 25,
+                                          self.collision_simulation, self.LKM_ONE,
+                                          'Симуляция столкновения')
+
         self.movement_simulation = button(self.display, (self.scal_x * 925, self.scal_y * 510),
                                           self.scal_x * 255, self.scal_y * 25,
                                           self.movement_simulation, self.LKM_ONE,
@@ -167,6 +173,14 @@ class GravityScene:
 
         if self.movement_simulation and not (self.LKM and self.field_rect.collidepoint(self.mouse)):
             self.x_list, self.y_list, self.vx_list, self.vy_list, self.t = movement(n, self.x_list, self.y_list, self.m_list, self.vx_list, self.vy_list, self.t)
+
+        if self.collision_simulation and not (self.LKM and self.field_rect.collidepoint(self.mouse)):
+            self.x_list, self.y_list, self.m_list, self.vx_list, self.vy_list, self.s_list = collision(self.x_list,
+                                                                                                   self.y_list,
+                                                                                                   self.m_list,
+                                                                                                   self.vx_list,
+                                                                                                   self.vy_list,
+                                                                                                   self.s_list)
 
     def run(self):
         while self.play:
