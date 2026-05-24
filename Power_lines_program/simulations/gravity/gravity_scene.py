@@ -175,12 +175,13 @@ class GravityScene:
             self.x_list, self.y_list, self.vx_list, self.vy_list, self.t = movement(n, self.x_list, self.y_list, self.m_list, self.vx_list, self.vy_list, self.t)
 
         if self.collision_simulation and not (self.LKM and self.field_rect.collidepoint(self.mouse)):
-            self.x_list, self.y_list, self.m_list, self.vx_list, self.vy_list, self.s_list = collision(self.x_list,
-                                                                                                   self.y_list,
-                                                                                                   self.m_list,
-                                                                                                   self.vx_list,
-                                                                                                   self.vy_list,
-                                                                                                   self.s_list)
+            self.x_list, self.y_list, self.m_list, self.vx_list, self.vy_list, self.s_list, self.c_list = collision(self.x_list,
+                                                                                                                    self.y_list,
+                                                                                                                    self.m_list,
+                                                                                                                    self.vx_list,
+                                                                                                                    self.vy_list,
+                                                                                                                    self.s_list,
+                                                                                                                    self.c_list )
 
     def run(self):
         while self.play:

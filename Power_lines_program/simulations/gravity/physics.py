@@ -33,7 +33,7 @@ def movement(n, x_list, y_list, m_list, vx_list, vy_list, t, dt=1/60):
 
     return x_list, y_list, vx_list, vy_list, t
 
-def collision(x_list, y_list, m_list, vx_list, vy_list, s_list):
+def collision(x_list, y_list, m_list, vx_list, vy_list, s_list, c_list):
     n = len(m_list)
 
     for i in range(n):
@@ -55,4 +55,15 @@ def collision(x_list, y_list, m_list, vx_list, vy_list, s_list):
                     vy_list[j] = 0
                     m_list[j] = 0
                     s_list[j] = 0
-    return x_list, y_list, m_list, vx_list, vy_list, s_list
+
+        # Очистка "мёртвых" тел
+    alive_mask = m_list > 0
+    x_list = x_list[alive_mask]
+    y_list = y_list[alive_mask]
+    m_list = m_list[alive_mask]
+    vx_list = vx_list[alive_mask]
+    vy_list = vy_list[alive_mask]
+    s_list = [s for i, s in enumerate(s_list) if alive_mask[i]]
+    c_list = [c for i, c in enumerate(c_list) if alive_mask[i]]
+
+    return x_list, y_list, m_list, vx_list, vy_list, s_list, c_list
