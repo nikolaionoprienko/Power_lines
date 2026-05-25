@@ -1,5 +1,6 @@
 import pygame as pg
 import numpy as np
+
 from engine.vector import vec
 from core.colors import WHITE, DARK_GRAY
 
@@ -26,3 +27,16 @@ def draw_scene(scene):
     elif scene.movement_simulation:
          time_text = scene.f1.render(str(round(scene.t, 1)) + ' c', True, DARK_GRAY, WHITE)
          field.blit(time_text, (5, 5))
+
+def draw_tracers(field, tracers, enabled = True):
+    if not enabled:
+        return
+    for tracer in tracers:
+        if len(tracer) < 2:
+            continue
+
+        points = list(tracer)
+        for j in range(1, len(points)):
+            brightness = int(255 * j / len(points))
+            color = (brightness, 200, 200)
+            pg.draw.line(field, color, points[j-1], points[j],1)

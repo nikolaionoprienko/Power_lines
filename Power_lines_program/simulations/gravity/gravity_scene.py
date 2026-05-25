@@ -1,15 +1,18 @@
+from collections import deque
+
 import pygame as pg
 from pygame import RESIZABLE, FULLSCREEN, Surface
 import numpy as np
 from core.colors import GRAY, DARK_GRAY, WHITE, TURQUOISE
 from core.settings import (FPS, WINDOW_WIDTH, WINDOW_HEIGHT, FIELD_HEIGHT, FIELD_WIDTH,
                            DEFAULT_NUMBER_OF_LINES, DEFAULT_NUMBER_OF_ITERATIONS,
-                           DEFAULT_Q, DEFAULT_M)
+                           DEFAULT_Q, DEFAULT_M, DEFAULT_MAX_TRACERS_LENGTH)
 from engine.button import button
 from engine.slider import slider
 from engine.vector import vec
 from simulations.gravity.physics import movement, collision
-from simulations.gravity.rendering import draw_scene
+from simulations.gravity.rendering import draw_scene, draw_tracers
+
 
 class GravityScene:
     def __init__(self, display):
@@ -24,6 +27,10 @@ class GravityScene:
         self.vy_list = np.array([])
         self.s_list = []
         self.c_list = []
+        self.tracers = []
+        self.max_trail_length = DEFAULT_MAX_TRACERS_LENGTH
+
+        self.tracers_simulation = True
         self.movement_simulation = True
         self.collision_simulation = True
         self.LKM_ONE = False
@@ -96,6 +103,8 @@ class GravityScene:
         self.s_list.append((3 * self.m)/(4 * np.pi * 5) + 4)
         self.c_list.append((155, 48, 68))
 
+        self.tracers.append(deque(maxlen=self.max_trail_length))
+
     def add_velocity_vector(self, mouse_pos):
         if self.mouse_start is not None:
             dx = (mouse_pos[0] - self.mouse_start[0])
@@ -111,6 +120,8 @@ class GravityScene:
         self.vy_list = np.array([])
         self.s_list = []
         self.c_list = []
+
+        self.tracers.clear()
 
     def update_and_draw(self):
         """Основное тело цикла: обновление данных, слайдеров, кнопок и рисование."""
@@ -130,15 +141,19 @@ class GravityScene:
         string_2 = self.f1.render('Очистить экран от зарядов: ESC', True, WHITE)
         string_3 = self.f1.render('Развернуть на полный экран: F', True, WHITE)
         string_4 = self.f1.render('Масса', True, WHITE)
+        string_5 = self.f1.render('длина траектории', True, WHITE)
 
         self.virtual_display.blit(string_0, (905, 40))
         self.virtual_display.blit(string_1, (905, 65))
         self.virtual_display.blit(string_2, (905, 90))
         self.virtual_display.blit(string_3, (905, 115))
         self.virtual_display.blit(string_4, (910, 210))
+        self.virtual_display.blit(string_5, (910, 255))
 
-        string_8_8 = self.f1.render(str(self.m) + ' г', True, TURQUOISE)
-        self.virtual_display.blit(string_8_8, (1200, 220))
+        string_6 = self.f1.render(str(self.m) + ' г', True, TURQUOISE)
+        self.virtual_display.blit(string_6, (1200, 220))
+        string_7 = self.f1.render(str(self.max_trail_length), True, TURQUOISE)
+        self.virtual_display.blit(string_7, (1200, 265))
 
         pg.draw.rect(self.virtual_display, WHITE, (20, 20, 870, 680), 7)
 
@@ -147,9 +162,20 @@ class GravityScene:
 
 
         self.field.fill(DARK_GRAY)
+        if self.tracers_simulation:
+            draw_tracers(self.field, self.tracers)
+
 
         self.m = round(slider(self.display, [self.scal_x * 925, self.scal_y * 235], self.scal_x * 255, 251,
                               self.m / 4, self.mouse, self.LKM, self.m / 4, 20) * 4, 1)
+        self.max_trail_length = int(slider(self.display, [self.scal_x * 925, self.scal_y * 280], self.scal_x * 255, 255,
+                              self.max_trail_length/4, self.mouse, self.LKM, self.max_trail_length/4, 20)) * 4
+
+
+        self.tracers_simulation = button(self.display, (self.scal_x * 925, self.scal_y * 390),
+                                          self.scal_x * 255, self.scal_y * 25,
+                                          self.tracers_simulation, self.LKM_ONE,
+                                          'траектории')
 
         self.collision_simulation = button(self.display, (self.scal_x * 925, self.scal_y * 450),
                                           self.scal_x * 255, self.scal_y * 25,
@@ -182,6 +208,16 @@ class GravityScene:
                                                                                                                     self.vy_list,
                                                                                                                     self.s_list,
                                                                                                                     self.c_list )
+
+        n = len(self.m_list)
+        if len(self.tracers) != n:
+            self.tracers = [deque(maxlen=self.max_trail_length) for _ in range(n)]
+
+        if self.tracers_simulation:
+            for i in range(n):
+                self.tracers[i].append((int(self.x_list[i]), int(self.y_list[i])))
+
+
 
     def run(self):
         while self.play:
