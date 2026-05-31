@@ -67,3 +67,19 @@ def collision(x_list, y_list, m_list, vx_list, vy_list, s_list, c_list):
     c_list = [c for i, c in enumerate(c_list) if alive_mask[i]]
 
     return x_list, y_list, m_list, vx_list, vy_list, s_list, c_list
+
+def barycentric(x_list, y_list, m_list, vx_list, vy_list, FIELD_HEIGHT, FIELD_WIDTH):
+
+    if len(m_list) > 0:
+
+        center_of_mass_x = sum(x_list * m_list)/sum(m_list)
+        center_of_mass_y = sum(y_list * m_list) / sum(m_list)
+        vx_center = sum(vx_list * m_list)/sum(m_list)
+        vy_center = sum(vy_list * m_list) / sum(m_list)
+
+        x_list = x_list - center_of_mass_x + FIELD_WIDTH/2
+        y_list = y_list - center_of_mass_y + FIELD_HEIGHT/2
+        vx_list = vx_list - vx_center
+        vy_list = vy_list - vy_center
+
+    return x_list, y_list, m_list, vx_list, vy_list

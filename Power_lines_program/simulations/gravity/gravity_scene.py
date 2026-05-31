@@ -10,7 +10,7 @@ from core.settings import (FPS, WINDOW_WIDTH, WINDOW_HEIGHT, FIELD_HEIGHT, FIELD
 from engine.button import button
 from engine.slider import slider
 from engine.vector import vec
-from simulations.gravity.physics import movement, collision
+from simulations.gravity.physics import movement, collision, barycentric
 from simulations.gravity.rendering import draw_scene, draw_tracers
 
 
@@ -33,6 +33,7 @@ class GravityScene:
         self.tracers_simulation = True
         self.movement_simulation = True
         self.collision_simulation = True
+        self.center_simulation = False
         self.LKM_ONE = False
 
         self.m = DEFAULT_M
@@ -187,6 +188,11 @@ class GravityScene:
                                           self.movement_simulation, self.LKM_ONE,
                                           'Симуляция движения')
 
+        self.center_simulation = button(self.display, (self.scal_x * 925, self.scal_y * 570),
+                                          self.scal_x * 255, self.scal_y * 25,
+                                          self.center_simulation, self.LKM_ONE,
+                                          'относительно центра масс')
+
         n = len(self.m_list)
         draw_scene(self)
 
@@ -198,7 +204,13 @@ class GravityScene:
         self.field_rect = scaled_field.get_rect(topleft=(25 * self.scal_x, 25 * self.scal_y))
 
         if self.movement_simulation and not (self.LKM and self.field_rect.collidepoint(self.mouse)):
-            self.x_list, self.y_list, self.vx_list, self.vy_list, self.t = movement(n, self.x_list, self.y_list, self.m_list, self.vx_list, self.vy_list, self.t)
+            self.x_list, self.y_list, self.vx_list, self.vy_list, self.t = movement(n, self.x_list,
+                                                                                    self.y_list,
+                                                                                    self.m_list,
+                                                                                    self.vx_list,
+                                                                                    self.vy_list,
+                                                                                    self.t)
+
 
         if self.collision_simulation and not (self.LKM and self.field_rect.collidepoint(self.mouse)):
             self.x_list, self.y_list, self.m_list, self.vx_list, self.vy_list, self.s_list, self.c_list = collision(self.x_list,
@@ -208,6 +220,16 @@ class GravityScene:
                                                                                                                     self.vy_list,
                                                                                                                     self.s_list,
                                                                                                                     self.c_list )
+
+
+        if self.center_simulation and not (self.LKM and self.field_rect.collidepoint(self.mouse)):
+            self.x_list, self.y_list, self.m_list, self.vx_list, self.vy_list = barycentric(self.x_list,
+                                                                                            self.y_list,
+                                                                                            self.m_list,
+                                                                                            self.vx_list,
+                                                                                            self.vy_list,
+                                                                                            FIELD_HEIGHT,
+                                                                                            FIELD_WIDTH)
 
         n = len(self.m_list)
         if len(self.tracers) != n:
