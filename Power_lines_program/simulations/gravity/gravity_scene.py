@@ -3,6 +3,7 @@ from collections import deque
 import pygame as pg
 from pygame import RESIZABLE, FULLSCREEN, Surface
 import numpy as np
+
 from core.colors import GRAY, DARK_GRAY, WHITE, TURQUOISE
 from core.settings import (FPS, WINDOW_WIDTH, WINDOW_HEIGHT, FIELD_HEIGHT, FIELD_WIDTH,
                            DEFAULT_NUMBER_OF_LINES, DEFAULT_NUMBER_OF_ITERATIONS,
@@ -55,6 +56,13 @@ class GravityScene:
         self.height_field = FIELD_HEIGHT
         self.width_field = FIELD_WIDTH
 
+        self.camera_x = 0.0
+        self.camera_y = 0.0
+        self.camera_zoom = 1.0
+        self.dragging = False
+        self.drag_start_camera = (0.0, 0.0)
+        self.drag_start_mouse = (0, 0)
+
         self.virtual_display = Surface((self.width, self.height))
         self.field = Surface((self.width_field, self.height_field))
         self.field_rect = self.field.get_rect(topleft=(25, 25))
@@ -86,25 +94,56 @@ class GravityScene:
                     if event.button == 1:
                         self.add_mass()
                         self.mouse_start = np.array(self.mouse)
+                if event.button == 2:
+                    self.dragging = True
+                    self.drag_start_mouse = event.pos
+                    self.drag_start_camera = (self.camera_x, self.camera_y)
 
             elif event.type == pg.MOUSEBUTTONUP:
                 if event.button == 1:
                     self.LKM = False
                     if self.field_rect.collidepoint(self.mouse):
                         self.add_velocity_vector(np.array(self.mouse))
+                if event.button == 2:
+                    self.dragging = False
+
+            elif event.type == pg.MOUSEMOTION:
+                if self.dragging:
+                    dx = event.pos[0] - self.drag_start_mouse[0]
+                    dy = event.pos[1] - self.drag_start_mouse[1]
+                    self.camera_x = self.drag_start_camera[0] - dx/self.camera_zoom
+                    self.camera_y = self.drag_start_camera[1] - dy / self.camera_zoom
+
+            elif event.type == pg.MOUSEWHEEL:
+                mouse_x, mouse_y = pg.mouse.get_pos()
+                field_mouse_x = mouse_x - self.field_rect.left
+                field_mouse_y = mouse_y - self.field_rect.top
+
+                phys_x, phys_y = self.screen_to_phys(field_mouse_x, field_mouse_y)
+
+                zoom_factor = 1.1 if event.y > 0 else 0.9
+                new_zoom = self.camera_zoom * zoom_factor
+
+                if 0.05 < new_zoom < 20:
+                    self.camera_x = phys_x - (field_mouse_x - self.width_field / 2) / new_zoom
+                    self.camera_y = phys_y - (field_mouse_y - self.height_field / 2) / new_zoom
+                    self.camera_zoom = new_zoom
+
 
 
 
     def add_mass(self):
-        x = self.mouse[0] - self.scal_x * 25
-        y = self.mouse[1] - self.scal_y * 25
-        self.x_list = np.append(self.x_list, x)
-        self.y_list = np.append(self.y_list, y)
+        field_mouse_x = self.mouse[0] - self.field_rect.left
+        field_mouse_y = self.mouse[1] - self.field_rect.top
+        phys_x, phys_y = self.screen_to_phys(field_mouse_x, field_mouse_y)
+        self.x_list = np.append(self.x_list, phys_x)
+        self.y_list = np.append(self.y_list, phys_y)
         self.m_list = np.append(self.m_list, self.m)
         self.s_list.append((3 * self.m)/(4 * np.pi * 5) + 4)
         self.c_list.append((155, 48, 68))
 
         self.tracers.append(deque(maxlen=self.max_trail_length))
+
 
     def add_velocity_vector(self, mouse_pos):
         if self.mouse_start is not None:
@@ -112,6 +151,7 @@ class GravityScene:
             dy = (mouse_pos[1] - self.mouse_start[1])
             self.vx_list = np.append(self.vx_list, dx)
             self.vy_list = np.append(self.vy_list, dy)
+
 
     def clear_mass(self):
         self.x_list = np.array([])
@@ -123,6 +163,23 @@ class GravityScene:
         self.c_list = []
 
         self.tracers.clear()
+
+
+    def phys_to_screen(self, x, y):
+
+        screen_x = (x - self.camera_x) * self.camera_zoom + self.width_field / 2
+        screen_y = (y - self.camera_y) * self.camera_zoom + self.height_field / 2
+
+        return int(screen_x), int(screen_y)
+
+
+    def screen_to_phys(self, screen_x, screen_y):
+
+        phys_x = (screen_x - self.width_field/2)/self.camera_zoom + self.camera_x
+        phys_y = (screen_y - self.height_field/2)/self.camera_zoom + self.camera_y
+
+        return phys_x, phys_y
+
 
     def update_and_draw(self):
         """Основное тело цикла: обновление данных, слайдеров, кнопок и рисование."""
@@ -164,7 +221,7 @@ class GravityScene:
 
         self.field.fill(DARK_GRAY)
         if self.tracers_simulation:
-            draw_tracers(self.field, self.tracers)
+            draw_tracers(self)
 
 
         self.m = round(slider(self.display, [self.scal_x * 925, self.scal_y * 235], self.scal_x * 255, 251,
@@ -230,6 +287,9 @@ class GravityScene:
                                                                                             self.vy_list,
                                                                                             FIELD_HEIGHT,
                                                                                             FIELD_WIDTH)
+            self.camera_x = self.width_field/2
+            self.camera_y = self.height_field/2
+            self.camera_zoom = 1.0
 
         n = len(self.m_list)
         if len(self.tracers) != n:

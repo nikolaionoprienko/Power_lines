@@ -10,9 +10,10 @@ def draw_scene(scene):
 
     # отрисовка масс
     for i in range(len(scene.m_list)):
-        center = (int(scene.x_list[i]), int(scene.y_list[i]))
-        pg.draw.circle(field, scene.c_list[i], center, scene.s_list[i])
-        pg.draw.circle(field, WHITE, center, scene.s_list[i], 2)
+        center = scene.phys_to_screen(scene.x_list[i], scene.y_list[i])
+        radius = int(scene.s_list[i] * scene.camera_zoom)
+        pg.draw.circle(field, scene.c_list[i], center, radius)
+        pg.draw.circle(field, WHITE, center, radius, 2)
 
     # отрисовка вектора скорости при добавлении массы
     if scene.LKM and scene.field_rect.collidepoint(scene.mouse):
@@ -28,15 +29,15 @@ def draw_scene(scene):
          time_text = scene.f1.render(str(round(scene.t, 1)) + ' c', True, DARK_GRAY, WHITE)
          field.blit(time_text, (5, 5))
 
-def draw_tracers(field, tracers, enabled = True):
-    if not enabled:
+def draw_tracers(scene):
+    if not scene.tracers_simulation:
         return
-    for tracer in tracers:
+    field = scene.field
+    for tracer in scene.tracers:
         if len(tracer) < 2:
             continue
-
-        points = list(tracer)
+        points = [scene.phys_to_screen(x, y) for x, y in tracer]
         for j in range(1, len(points)):
             brightness = int(255 * j / len(points))
             color = (brightness, 200, 200)
-            pg.draw.line(field, color, points[j-1], points[j],1)
+            pg.draw.line(field, color, points[j-1], points[j], 1)
